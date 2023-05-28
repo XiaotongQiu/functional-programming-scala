@@ -276,6 +276,8 @@ trait Huffman extends HuffmanInterface:
    * To speed up the encoding process, it first converts the code tree to a code table
    * and then uses it to perform the actual encoding.
    */
+  
+  // TODO debug this part
   def quickEncode(tree: CodeTree)(text: List[Char]): List[Bit] =
     val codeTable = convert(tree)
     var res = List[Bit]()
