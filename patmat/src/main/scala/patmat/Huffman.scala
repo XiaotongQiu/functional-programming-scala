@@ -112,7 +112,7 @@ trait Huffman extends HuffmanInterface:
           f :: trees
         else trees.head::insert(f, trees.tail)
 
-    if singleton(trees) then
+    if trees.isEmpty || singleton(trees) then
       trees
     else
       val f = makeCodeTree(trees.head, trees.tail.head)
