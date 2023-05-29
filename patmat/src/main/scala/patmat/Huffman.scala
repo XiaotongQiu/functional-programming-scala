@@ -154,23 +154,19 @@ trait Huffman extends HuffmanInterface:
    * the resulting list of characters.
    */
   def decode(tree: CodeTree, bits: List[Bit]): List[Char] =
-    val oriTree = tree
-    def helper(tree: CodeTree, bits: List[Bit], acc:List[Char]): List[Char] =
-      tree match
-        case Leaf(char, weight) =>
-//          println("we have " + char)
-          helper(oriTree, bits, char::acc)
-        case Fork(left, right, chars, weight) =>
-          if bits.isEmpty then return acc.reverse
+    def helper(curTree: CodeTree, bits: List[Bit], acc:List[Char]): List[Char] =
+      curTree match
+        case Leaf(char, _) =>
+          helper(tree, bits, char::acc)
+        case Fork(left, right, _, _) =>
+          if bits.isEmpty then return acc
           bits.head match
             case 0 =>
-//              println("going left")
               helper(left, bits.tail, acc)
             case 1 =>
-//              println("going right")
               helper(right, bits.tail, acc)
 
-    helper(tree, bits, List())
+    helper(tree, bits, List()).reverse
 
 
 
@@ -201,30 +197,14 @@ trait Huffman extends HuffmanInterface:
   def encode(tree: CodeTree)(text: List[Char]): List[Bit] =
     def helper(tree: CodeTree, c: Char, acc: List[Bit]): List[Bit] =
       tree match
-        case Leaf(char, weight) =>
-//          println("leaf node " + char + " we need " + c)
-          if c == char then
-            acc
+        case Leaf(_, _) => acc
+        case Fork(left, right, _, _) =>
+          if chars(left).contains(c) then
+            helper(left, c, acc:::List(0))
           else
-            Nil
-        case Fork(left, right, chars, weight) =>
-          if chars.contains(c) then
-//            println("contains " + c)
-            val l = helper(left, c, 0 :: acc)
-            if l.nonEmpty then
-              l
-            else
-              helper(right, c, 1::acc)
-          else Nil
+            helper(right, c, acc:::List(1))
 
-    var res = List[Bit]()
-    for (c <- text) {
-      val tmp = helper(tree, c, List())
-      res = tmp:::res
-//      println("for " + c +" encode is " + tmp + " cur res " + res.toString())
-    }
-//    println("for " + text.toString() + " encode is " + res.reverse)
-    res.reverse
+    text.flatMap(c => helper(tree, c, List[Bit]()))
 
   // Part 4b: Encoding using code table
 
@@ -235,7 +215,7 @@ trait Huffman extends HuffmanInterface:
    * the code table `table`.
    */
   def codeBits(table: CodeTable)(char: Char): List[Bit] =
-    println(table)
+//    println(table)
     table.filter(_._1==char).head._2
 
   /**
@@ -247,20 +227,9 @@ trait Huffman extends HuffmanInterface:
    * sub-trees, think of how to build the code table for the entire tree.
    */
   def convert(tree: CodeTree): CodeTable =
-    var res: CodeTable = List()
+    val res: CodeTable = List()
 
-    def helper(tree: CodeTree, acc: List[Bit]): Unit = tree match
-      case Leaf(char, weight) =>
-//        mergeCodeTables((char, acc.reverse), res)
-        res = (char, acc.reverse)::res
-      case Fork(left, right, chars, weight) =>
-        helper(left, 0::acc)
-        helper(right, 1::acc)
-
-    helper(tree, List())
-
-    println("res " + res)
-    res
+    chars(tree).foldLeft(res)((res, char) => mergeCodeTables(List((char, encode(tree)(List(char)))), res))
 
   /**
    * This function takes two code tables and merges them into one. Depending on how you
@@ -276,15 +245,9 @@ trait Huffman extends HuffmanInterface:
    * To speed up the encoding process, it first converts the code tree to a code table
    * and then uses it to perform the actual encoding.
    */
-  
+
   // TODO debug this part
   def quickEncode(tree: CodeTree)(text: List[Char]): List[Bit] =
-    val codeTable = convert(tree)
-    var res = List[Bit]()
-    for (c <- text) {
-      res = codeBits(codeTable)(c):::res
-    }
-
-    res.reverse
+    text.flatMap(c => codeBits(convert(tree))(c))
 
 object Huffman extends Huffman
