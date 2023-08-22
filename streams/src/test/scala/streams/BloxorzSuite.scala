@@ -54,6 +54,32 @@ class BloxorzSuite extends munit.FunSuite:
       assertEquals(startPos, Pos(1, 1))
   }
 
+  test("find history") {
+    new Level1 {
+      assertEquals(neighborsWithHistory(Block(Pos(1,1),Pos(1,1)), List(Move.Left, Move.Up)),
+      Set(
+        (Block(Pos(1, 2), Pos(1, 3)), List(Move.Right, Move.Left, Move.Up)),
+        (Block(Pos(2, 1), Pos(3, 1)), List(Move.Down, Move.Left, Move.Up))
+      ).to(LazyList))
+    }
+  }
+
+  test("avoid explored move") {
+    new Level1 {
+      assertEquals(newNeighborsOnly(
+        Set(
+          (Block(Pos(1, 2), Pos(1, 3)), List(Move.Right, Move.Left, Move.Up)),
+          (Block(Pos(2, 1), Pos(3, 1)), List(Move.Down, Move.Left, Move.Up))
+        ).to(LazyList),
+        Set(Block(Pos(1, 2), Pos(1, 3)), Block(Pos(1, 1), Pos(1, 1)))
+      ),
+        Set(
+          (Block(Pos(2, 1), Pos(3, 1)), List(Move.Down, Move.Left, Move.Up))
+        ).to(LazyList)
+      )
+    }
+  }
+
 
   test("optimal solution for level 1 (5pts)") {
     new Level1:
